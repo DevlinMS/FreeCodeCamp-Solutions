@@ -1,0 +1,84 @@
+<script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
+
+<body>
+<nav id="navbar">
+  <header>Typesetting</header>
+  <a href="#Introduction" class="nav-link">Introduction</a>
+  <a href="#Tools" class="nav-link">Tools</a>
+  <a href="#Basics" class="nav-link">Basics</a>
+  <a href="#Filtering_Video" class="nav-link">Filtering Video</a>
+  <a href="#LUA_Scripting" class="nav-link">LUA Scripting</a>
+</nav>
+
+<main id="main-doc">
+  <section class="main-section" id="Introduction">
+    <header>Introduction</header>
+    <p>Typesetting is the most important part of typography, because most text is meant to be read, and typesetting involves preparing text for reading.</p>
+  </section>
+  <section class="main-section" id="Tools">
+    <header>Tools</header>
+    <p>To be a world class typesetter, there are a few different programs that you will need. Many you can do without, but it will make your work much more difficult and decrease the quality of your work.</p>
+    <p>You should have:</p>
+    <ul>
+      <li>Aegisub</li>
+      <li>Vapoursynth</li>
+      <li>A font manager</li>
+      <li>Motion tracking software</li>
+      <li>A vector drawing program</li>
+    </ul>
+  </section>
+  <section class="main-section" id="Basics">
+    <header>Basics</header>
+    <p>Typesetting is mostly making sure the subtitle dialogue is visually legible and signs look like they are natively part of the video. Typesetting can also extend to styling the opening, ending and insert songs, including fancy karaoke.</p>
+  </section>
+  <section class="main-section" id="Filtering_Video">
+    <header>Filtering Video</header>
+    <p>Learning the basics of typesetting is good and all, but what if your video is just not of a very good quality? Never fear, for this is solvable to, as you can use Vapoursynth the apply filters to a video to improve image quality!</p>
+    <p>The most common times you are using filters to improve quality is when the video comes from an analouge medium, or you are trying to diminish banding. These filters can help, but overusing them may degrade image quality instead. Sometimes its better to just look for a higher quality source.</p>
+    <p>To start your filtering you need to import your video at the beginning of the script and output it at the end, this is the code to do so on Vapoursynth.</p>
+    <pre><code>from vapoursynth import core
+video = core.d2v.Source(r'video.d2v')</code></pre>
+  <p>VIVTC is a plugin that contains several filters that are used for handling telecined (interlaced) footage.  The VFM filter is used to restore progressive frames from the telecined source, and then VDecimate is used to delete duplicate frames from the TFM result.  The filter order is important; running VDecimate before VFM will eliminate information VFM needs to properly restore the progressive frames.  Below is an example of how to use VIVTC.</p>
+  <pre><code>video = core.d2v.Source(r'video.d2v')
+video = core.vivtc.VFM(video, order=1, cthresh=10)
+video = core.vivtc.VDecimate(video)</code></pre>
+  <p>Dot-Craw and Rainbowing are visual flaws in video that are often seen together and are a result of how the footage was handled in an analog format before being captured digitally. Both can typically be seen along the edges of objects in the video and dot crawl can additionally be noticed along the edge of the picture as well. There is no way to completely eliminate these flaws, however filters can be used to reduce the appearance of them.  One must be careful when applying such filters as stronger the settings increasingly degrade the picture quality.  It is best to handle these flaws before removing the interlacing and filters like TComb & Bifrost are great solutions.  Here is an example of how to use TComb & Bifrost:</p>
+  <pre><code>video = core.d2v.Source(r'video.d2v')
+video = core.tcomb.TComb(video, mode=2)
+video = core.bifrost.Bifrost(video, interlaced=True)
+video = core.vivtc.VFM(video, order=1, cthresh=10)
+video = core.vivtc.VDecimate(video)</code></pre>
+  <p>One of the limitations of the current standard for color depth causes an issue called “banding” with flat gradients.  Banding appears as a series of distinct color changes across what is supposed to be a smooth gradient. Since this is caused by a limitation in the bit depth, the best way to reduce this is to use a filter which will dither or create a random pixel pattern around the edge of color steps.  This allows the video to trick the human eye into thinking there are intermediate colors there that the current bit depth is not able to achieve. One of the most common filters to use for banding reduction is Flash3kyuu Deband and using the default values is sufficient for most situations.  Advanced users should refer to the documentation for other settings and tweaks to improve the overall quality.  Here is an example of how to use Flash3kyuu Deband:
+</p>
+  <pre><code>video = core.lsmas.LWLibavSource(r'video.mkv')
+video = core.f3kdb.Deband(video)</code></pre>
+  <p>To ensure quality, you will want to use debanding after smoothing, but before sharpening filters.</p>
+ <p>It is important to consider sharpening the video since many filters cause some degree of blurring.  While it is important to sharpen the image, regular sharpening filters can introduce artifacts. Filters like Hysteria will allow you to sharpen the edges and outlines without affecting the rest of the image.  The default values are good as is, and only in rare cases would the values need to be changed. Here is an example of how Hysteria is used:</p>
+  <pre><code>import hysteria as hys
+video = core.lsmas.LWLibavSource(r'video.mkv')
+video = hys.Hysteria(video)</code></pre>
+  <p>If you need to apply other filters to a video it is always best to apply sharpening last to avoid preventing details that need to be filtered out from being sharpened and surviving the filter chain.  It also helps to insure the final output is sharp and not blurry as a result of the other filters applied to the source.</p>
+  <p>These filters don't need to all be done seperatly, the can be done all together like so:</p>
+  <pre><code>from vapoursynth import core
+import hysteria as hys
+video = core.d2v.Source(r'video.d2v')
+video = core.vivtc.VFM(video, order=1, cthresh=10)
+video = core.vivtc.VDecimate(video)
+video = core.tcomb.TComb(video, mode=2)
+video = core.bifrost.Bifrost(video, interlaced=True)
+video = core.f3kdb.Deband(video)
+video = hys.Hysteria(video)
+video.set_output()</code></pre>
+    <p>I pretty much took this section from <a href="http://www.l33tmeatwad.com/vapoursynth101/using-filters-functions">l33tmeatwad</a>, but please visit their site if you really want to use this code. Just to make sure its all good.</p>
+  </section>
+  <section class="main-section" id="LUA_Scripting">
+    <header>LUA Scripting</header>
+    <p>LUA scripting is an advance technique used for karaoke effects and other more advance type setting features. By using LUA scripts you will be able to:</p>
+    <ul>
+      <li>Automatically apply KFX</li>
+      <li>Select and sort lines based on certain criteria</li>
+      <li>Add tags and cycle through values</li>
+    </ul>
+  </section>
+</main>
+</body>
